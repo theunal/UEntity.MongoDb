@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<Authors>Yusuf Ünal</Authors>
+		<Company>Yusuf Ünal</Company>
+		<PackageProjectUrl>https://github.com/theunal/UEntity.MongoDb</PackageProjectUrl>
+		<Description>The IEntityRepositoryMongo interface provides a repository abstraction for performing CRUD (Create, Read, Update, Delete) and query operations on MongoDB collections. The interface provides synchronous and asynchronous methods for managing operations on a given type (T). This structure simplifies MongoDB operations while offering flexibility and extensibility.</Description>
+		<PackageIcon>logo.png</PackageIcon>
+		<PackageTags>mongodb generic repository</PackageTags>
+		<RepositoryType>git</RepositoryType>
+		<Version>3.1.0</Version>
+		<PackageReadmeFile>readme.md</PackageReadmeFile>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="..\logo.png">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+		<None Include="..\readme.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.1" />
+		<PackageReference Include="MongoDB.Driver" Version="3.1.0" />
+	</ItemGroup>
+
+</Project>
