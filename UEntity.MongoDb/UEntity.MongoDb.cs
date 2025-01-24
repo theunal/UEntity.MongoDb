@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using MongoDB.Bson;
 using MongoDB.Driver;
+using MongoDB.Driver.Core.Clusters;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 
@@ -50,7 +52,7 @@ public interface IEntityRepositoryMongo<T> where T : IMongoEntity
     /// <param name="filter">Optional filter for the query.</param>
     /// <param name="sort">Optional sort criteria.</param>
     /// <returns>Paginated results.</returns>
-    Paginate<T> GetListPaginate(int page, int size, Expression<Func<T, bool>>? filter = null, EntitySortModel<T>? sort = null);
+    Paginate<T> GetListPaginate(int page, int size, FilterDefinition<T>? filter = null, EntitySortModel<T>? sort = null);
 
     /// <summary>
     /// Asynchronously retrieves paginated results based on the specified page, size, and optional filters and sorting.
@@ -61,7 +63,7 @@ public interface IEntityRepositoryMongo<T> where T : IMongoEntity
     /// <param name="sort">Optional sort criteria.</param>
     /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
     /// <returns>A task representing the asynchronous operation. The result contains paginated results.</returns>
-    Task<Paginate<T>> GetListPaginateAsync(int page, int size, Expression<Func<T, bool>>? filter = null, EntitySortModel<T>? sort = null, CancellationToken cancellationToken = default);
+    Task<Paginate<T>> GetListPaginateAsync(int page, int size, FilterDefinition<T>? filter = null, EntitySortModel<T>? sort = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Asynchronously inserts a single document into the collection.
@@ -239,7 +241,7 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
         }
         return await _collection.Find(filter).ToListAsync();
     }
-    public Paginate<T> GetListPaginate(int page, int size, Expression<Func<T, bool>>? filter = null, EntitySortModel<T>? sort = null)
+    public Paginate<T> GetListPaginate(int page, int size, FilterDefinition<T>? filter = null, EntitySortModel<T>? sort = null)
     {
         var query = _collection.Find(filter);
 
@@ -261,7 +263,7 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
             HasNext = page * size < count
         };
     }
-    public async Task<Paginate<T>> GetListPaginateAsync(int page, int size, Expression<Func<T, bool>>? filter = null, EntitySortModel<T>? sort = null, CancellationToken cancellationToken = default)
+    public async Task<Paginate<T>> GetListPaginateAsync(int page, int size, FilterDefinition<T>? filter = null, EntitySortModel<T>? sort = null, CancellationToken cancellationToken = default)
     {
         var query = _collection.Find(filter);
         if (sort != null)
@@ -379,6 +381,12 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
     }
 }
 
+public static class PredicateBuilder
+{
+    public static Expression<Func<T, bool>> NewQuery<T>(bool @is) => x => @is;
+    public static Expression<Func<T, bool>> NewQuery<T>(Expression<Func<T, bool>> predicate) => predicate;
+}
+
 /// <summary>
 /// Extension methods for configuring MongoDB services.
 /// </summary>
@@ -396,7 +404,45 @@ public static class UEntityMongoDbExtension
     {
         ArgumentNullException.ThrowIfNull(services);
         UEntityMongoClient = mongoClient;
+        DbMonitor();
         return services;
+    }
+
+    private static async Task DbMonitor()
+    {
+        while (true)
+        {
+            try
+            {
+                using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                await UEntityMongoClient!.GetDatabase("admin").RunCommandAsync<BsonDocument>(new BsonDocument { { "ping", 1 } },
+                    cancellationToken: cancellationTokenSource.Token);
+            }
+            catch (Exception e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"\n{DateTime.Now.ToString("u")} MongoDB connection failed: {e.Message}");
+
+                try
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine($"{DateTime.Now.ToString("u")} Re-establishing the MongoDB connection...");
+                    UEntityMongoClient = new MongoClient(UEntityMongoClient!.Settings);
+
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine($"{DateTime.Now.ToString("u")} The MongoDB connection was successfully re-established.");
+                }
+                catch (Exception ex)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine($"{DateTime.Now.ToString("u")} MongoDB reconnection failure: {ex.Message}");
+                }
+
+                Console.ResetColor();
+            }
+
+            await Task.Delay(TimeSpan.FromSeconds(10));
+        }
     }
 }
 public interface IMongoEntity { }
