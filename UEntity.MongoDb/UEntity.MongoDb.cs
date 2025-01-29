@@ -213,33 +213,33 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
     {
         if (sort != null)
         {
-            return _collection.Find(filter).Sort(GetSortDefinitionBuilder(sort)).Limit(1).FirstOrDefault();
+            return _collection.Find(Builders<T>.Filter.Where(filter)).Sort(GetSortDefinitionBuilder(sort)).Limit(1).FirstOrDefault();
         }
-        return _collection.Find(filter).Limit(1).FirstOrDefault();
+        return _collection.Find(Builders<T>.Filter.Where(filter)).Limit(1).FirstOrDefault();
     }
     public async Task<T?> GetAsync(Expression<Func<T, bool>> filter, EntitySortModel<T>? sort = null)
     {
         if (sort != null)
         {
-            return await _collection.Find(filter).Sort(GetSortDefinitionBuilder(sort)).Limit(1).FirstOrDefaultAsync();
+            return await _collection.Find(Builders<T>.Filter.Where(filter)).Sort(GetSortDefinitionBuilder(sort)).Limit(1).FirstOrDefaultAsync();
         }
-        return await _collection.Find(filter).Limit(1).FirstOrDefaultAsync();
+        return await _collection.Find(Builders<T>.Filter.Where(filter)).Limit(1).FirstOrDefaultAsync();
     }
     public List<T> GetAll(Expression<Func<T, bool>> filter, EntitySortModel<T>? sort = null)
     {
         if (sort != null)
         {
-            return _collection.Find(filter).Sort(GetSortDefinitionBuilder(sort)).ToList();
+            return _collection.Find(Builders<T>.Filter.Where(filter)).Sort(GetSortDefinitionBuilder(sort)).ToList();
         }
-        return _collection.Find(filter).ToList();
+        return _collection.Find(Builders<T>.Filter.Where(filter)).ToList();
     }
     public async Task<List<T>> GetAllAsync(Expression<Func<T, bool>> filter, EntitySortModel<T>? sort = null)
     {
         if (sort != null)
         {
-            return await _collection.Find(filter).Sort(GetSortDefinitionBuilder(sort)).ToListAsync();
+            return await _collection.Find(Builders<T>.Filter.Where(filter)).Sort(GetSortDefinitionBuilder(sort)).ToListAsync();
         }
-        return await _collection.Find(filter).ToListAsync();
+        return await _collection.Find(Builders<T>.Filter.Where(filter)).ToListAsync();
     }
     public Paginate<T> GetListPaginate(int page, int size, FilterDefinition<T>? filter = null, EntitySortModel<T>? sort = null)
     {
@@ -307,29 +307,29 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
     /* update */
     public ReplaceOneResult Update(Expression<Func<T, bool>> filter, T entity)
     {
-        return _collection.ReplaceOne(filter, entity);
+        return _collection.ReplaceOne(Builders<T>.Filter.Where(filter), entity);
     }
     public Task<ReplaceOneResult> UpdateAsync(Expression<Func<T, bool>> filter, T entity, CancellationToken cancellationToken = default)
     {
-        return _collection.ReplaceOneAsync(filter, entity, cancellationToken: cancellationToken);
+        return _collection.ReplaceOneAsync(Builders<T>.Filter.Where(filter), entity, cancellationToken: cancellationToken);
     }
 
     /* delete */
     public DeleteResult Delete(Expression<Func<T, bool>> filter)
     {
-        return _collection.DeleteOne(filter);
+        return _collection.DeleteOne(Builders<T>.Filter.Where(filter));
     }
     public Task<DeleteResult> DeleteAsync(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default)
     {
-        return _collection.DeleteOneAsync(filter, cancellationToken);
+        return _collection.DeleteOneAsync(Builders<T>.Filter.Where(filter), cancellationToken);
     }
     public DeleteResult DeleteRange(Expression<Func<T, bool>> filter)
     {
-        return _collection.DeleteMany(filter);
+        return _collection.DeleteMany(Builders<T>.Filter.Where(filter));
     }
     public Task<DeleteResult> DeleteRangeAsync(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default)
     {
-        return _collection.DeleteManyAsync(filter, cancellationToken);
+        return _collection.DeleteManyAsync(Builders<T>.Filter.Where(filter), cancellationToken);
     }
 
     /* other */
