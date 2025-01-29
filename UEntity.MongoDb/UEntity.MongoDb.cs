@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using MongoDB.Driver.Core.Clusters;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 
@@ -107,7 +106,7 @@ public interface IEntityRepositoryMongo<T> where T : IMongoEntity
     /// </summary>
     /// <param name="filter">Filter expression for the document to delete.</param>
     /// <returns>The result of the delete operation.</returns>
-    DeleteResult Delete(Expression<Func<T, bool>> filter);
+    DeleteResult ExecuteDelete(Expression<Func<T, bool>> filter);
 
     /// <summary>
     /// Asynchronously deletes a single document that matches the specified filter.
@@ -115,22 +114,22 @@ public interface IEntityRepositoryMongo<T> where T : IMongoEntity
     /// <param name="filter">Filter expression for the document to delete.</param>
     /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
     /// <returns>A task representing the asynchronous operation. The result contains the delete operation result.</returns>
-    Task<DeleteResult> DeleteAsync(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default);
+    Task<DeleteResult> ExecuteDeleteAsync(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Deletes multiple documents that match the specified filter.
-    /// </summary>
-    /// <param name="filter">Filter expression for the documents to delete.</param>
-    /// <returns>The result of the delete operation.</returns>
-    DeleteResult DeleteRange(Expression<Func<T, bool>> filter);
+    ///// <summary>
+    ///// Deletes multiple documents that match the specified filter.
+    ///// </summary>
+    ///// <param name="filter">Filter expression for the documents to delete.</param>
+    ///// <returns>The result of the delete operation.</returns>
+    //DeleteResult ExecuteDeleteRange(Expression<Func<T, bool>> filter);
 
-    /// <summary>
-    /// Asynchronously deletes multiple documents that match the specified filter.
-    /// </summary>
-    /// <param name="filter">Filter expression for the documents to delete.</param>
-    /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
-    /// <returns>A task representing the asynchronous operation. The result contains the delete operation result.</returns>
-    Task<DeleteResult> DeleteRangeAsync(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default);
+    ///// <summary>
+    ///// Asynchronously deletes multiple documents that match the specified filter.
+    ///// </summary>
+    ///// <param name="filter">Filter expression for the documents to delete.</param>
+    ///// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
+    ///// <returns>A task representing the asynchronous operation. The result contains the delete operation result.</returns>
+    //Task<DeleteResult> ExecuteDeleteRangeAsync(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Refreshes a single document by deleting and re-inserting it.
@@ -156,6 +155,7 @@ public interface IEntityRepositoryMongo<T> where T : IMongoEntity
     /// <param name="filter">Optional filter expression.</param>
     /// <returns>A list of projected results.</returns>
     List<TResult> SelectAll<TResult>(Expression<Func<T, TResult>> select, Expression<Func<T, bool>>? filter = null);
+    Task<List<TResult>> SelectAllAsync<TResult>(Expression<Func<T, TResult>> select, Expression<Func<T, bool>>? filter = null);
 
     /// <summary>
     /// Counts the number of documents matching the specified filter.
@@ -213,33 +213,33 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
     {
         if (sort != null)
         {
-            return _collection.Find(Builders<T>.Filter.Where(filter)).Sort(GetSortDefinitionBuilder(sort)).Limit(1).FirstOrDefault();
+            return _collection.Find(filter).Sort(GetSortDefinitionBuilder(sort)).Limit(1).FirstOrDefault();
         }
-        return _collection.Find(Builders<T>.Filter.Where(filter)).Limit(1).FirstOrDefault();
+        return _collection.Find(filter).Limit(1).FirstOrDefault();
     }
     public async Task<T?> GetAsync(Expression<Func<T, bool>> filter, EntitySortModel<T>? sort = null)
     {
         if (sort != null)
         {
-            return await _collection.Find(Builders<T>.Filter.Where(filter)).Sort(GetSortDefinitionBuilder(sort)).Limit(1).FirstOrDefaultAsync();
+            return await _collection.Find(filter).Sort(GetSortDefinitionBuilder(sort)).Limit(1).FirstOrDefaultAsync();
         }
-        return await _collection.Find(Builders<T>.Filter.Where(filter)).Limit(1).FirstOrDefaultAsync();
+        return await _collection.Find(filter).Limit(1).FirstOrDefaultAsync();
     }
     public List<T> GetAll(Expression<Func<T, bool>> filter, EntitySortModel<T>? sort = null)
     {
         if (sort != null)
         {
-            return _collection.Find(Builders<T>.Filter.Where(filter)).Sort(GetSortDefinitionBuilder(sort)).ToList();
+            return _collection.Find(filter).Sort(GetSortDefinitionBuilder(sort)).ToList();
         }
-        return _collection.Find(Builders<T>.Filter.Where(filter)).ToList();
+        return _collection.Find(filter).ToList();
     }
     public async Task<List<T>> GetAllAsync(Expression<Func<T, bool>> filter, EntitySortModel<T>? sort = null)
     {
         if (sort != null)
         {
-            return await _collection.Find(Builders<T>.Filter.Where(filter)).Sort(GetSortDefinitionBuilder(sort)).ToListAsync();
+            return await _collection.Find(filter).Sort(GetSortDefinitionBuilder(sort)).ToListAsync();
         }
-        return await _collection.Find(Builders<T>.Filter.Where(filter)).ToListAsync();
+        return await _collection.Find(filter).ToListAsync();
     }
     public Paginate<T> GetListPaginate(int page, int size, FilterDefinition<T>? filter = null, EntitySortModel<T>? sort = null)
     {
@@ -315,19 +315,19 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
     }
 
     /* delete */
-    public DeleteResult Delete(Expression<Func<T, bool>> filter)
-    {
-        return _collection.DeleteOne(Builders<T>.Filter.Where(filter));
-    }
-    public Task<DeleteResult> DeleteAsync(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default)
-    {
-        return _collection.DeleteOneAsync(Builders<T>.Filter.Where(filter), cancellationToken);
-    }
-    public DeleteResult DeleteRange(Expression<Func<T, bool>> filter)
+    //public DeleteResult ExecuteDelete(Expression<Func<T, bool>> filter)
+    //{
+    //    return _collection.DeleteOne(Builders<T>.Filter.Where(filter));
+    //}
+    //public Task<DeleteResult> ExecuteDeleteAsync(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default)
+    //{
+    //    return _collection.DeleteOneAsync(Builders<T>.Filter.Where(filter), cancellationToken);
+    //}
+    public DeleteResult ExecuteDelete(Expression<Func<T, bool>> filter)
     {
         return _collection.DeleteMany(Builders<T>.Filter.Where(filter));
     }
-    public Task<DeleteResult> DeleteRangeAsync(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default)
+    public Task<DeleteResult> ExecuteDeleteAsync(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default)
     {
         return _collection.DeleteManyAsync(Builders<T>.Filter.Where(filter), cancellationToken);
     }
@@ -335,17 +335,21 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
     /* other */
     public async Task RefreshAsync(Expression<Func<T, bool>> filter, T entity, CancellationToken cancellationToken = default)
     {
-        await DeleteAsync(filter, cancellationToken);
+        await ExecuteDeleteAsync(filter, cancellationToken);
         await AddAsync(entity, cancellationToken);
     }
     public async Task RefreshAllAsync(Expression<Func<T, bool>> filter, IEnumerable<T> entities, CancellationToken cancellationToken = default)
     {
-        await DeleteRangeAsync(filter, cancellationToken);
+        await ExecuteDeleteAsync(filter, cancellationToken);
         await AddRangeAsync(entities, cancellationToken);
     }
     public List<TResult> SelectAll<TResult>(Expression<Func<T, TResult>> select, Expression<Func<T, bool>>? filter = null)
     {
         return _collection.Find(filter ?? (_ => true)).Project(select).ToList();
+    }
+    public Task<List<TResult>> SelectAllAsync<TResult>(Expression<Func<T, TResult>> select, Expression<Func<T, bool>>? filter = null)
+    {
+        return _collection.Find(filter ?? (_ => true)).Project(select).ToListAsync();
     }
     public int Count(Expression<Func<T, bool>>? filter = null)
     {
@@ -381,10 +385,44 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
     }
 }
 
-public static class PredicateBuilder
+public static class PredicateBuilderMongo
 {
     public static Expression<Func<T, bool>> NewQuery<T>(bool @is) => x => @is;
     public static Expression<Func<T, bool>> NewQuery<T>(Expression<Func<T, bool>> predicate) => predicate;
+    public static Expression<Func<T, bool>> And<T>(this Expression<Func<T, bool>> first, Expression<Func<T, bool>> second)
+    {
+        if (first == null) return second;
+        if (second == null) return first;
+
+        var parameter = Expression.Parameter(typeof(T));
+        var body = Expression.AndAlso(
+            ReplaceParameter(first.Body, first.Parameters[0], parameter),
+            ReplaceParameter(second.Body, second.Parameters[0], parameter));
+        return Expression.Lambda<Func<T, bool>>(body, parameter);
+    }
+    public static Expression<Func<T, bool>> Or<T>(this Expression<Func<T, bool>> first, Expression<Func<T, bool>> second)
+    {
+        if (first == null) return second;
+        if (second == null) return first;
+        var parameter = Expression.Parameter(typeof(T));
+        var body = Expression.OrElse(
+            ReplaceParameter(first.Body, first.Parameters[0], parameter),
+            ReplaceParameter(second.Body, second.Parameters[0], parameter));
+        return Expression.Lambda<Func<T, bool>>(body, parameter);
+    }
+    private static Expression ReplaceParameter(Expression body, ParameterExpression oldParam, ParameterExpression newParam)
+    {
+        return new ParameterReplacer(oldParam, newParam).Visit(body);
+    }
+    private class ParameterReplacer(ParameterExpression oldParam, ParameterExpression newParam) : ExpressionVisitor
+    {
+        private readonly ParameterExpression _oldParam = oldParam;
+        private readonly ParameterExpression _newParam = newParam;
+        protected override Expression VisitParameter(ParameterExpression node)
+        {
+            return node == _oldParam ? _newParam : base.VisitParameter(node);
+        }
+    }
 }
 
 /// <summary>
