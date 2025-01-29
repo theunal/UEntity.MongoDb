@@ -116,21 +116,6 @@ public interface IEntityRepositoryMongo<T> where T : IMongoEntity
     /// <returns>A task representing the asynchronous operation. The result contains the delete operation result.</returns>
     Task<DeleteResult> ExecuteDeleteAsync(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default);
 
-    ///// <summary>
-    ///// Deletes multiple documents that match the specified filter.
-    ///// </summary>
-    ///// <param name="filter">Filter expression for the documents to delete.</param>
-    ///// <returns>The result of the delete operation.</returns>
-    //DeleteResult ExecuteDeleteRange(Expression<Func<T, bool>> filter);
-
-    ///// <summary>
-    ///// Asynchronously deletes multiple documents that match the specified filter.
-    ///// </summary>
-    ///// <param name="filter">Filter expression for the documents to delete.</param>
-    ///// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
-    ///// <returns>A task representing the asynchronous operation. The result contains the delete operation result.</returns>
-    //Task<DeleteResult> ExecuteDeleteRangeAsync(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default);
-
     /// <summary>
     /// Refreshes a single document by deleting and re-inserting it.
     /// </summary>
@@ -315,14 +300,6 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
     }
 
     /* delete */
-    //public DeleteResult ExecuteDelete(Expression<Func<T, bool>> filter)
-    //{
-    //    return _collection.DeleteOne(Builders<T>.Filter.Where(filter));
-    //}
-    //public Task<DeleteResult> ExecuteDeleteAsync(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default)
-    //{
-    //    return _collection.DeleteOneAsync(Builders<T>.Filter.Where(filter), cancellationToken);
-    //}
     public DeleteResult ExecuteDelete(Expression<Func<T, bool>> filter)
     {
         return _collection.DeleteMany(Builders<T>.Filter.Where(filter));

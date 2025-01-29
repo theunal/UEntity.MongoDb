@@ -91,9 +91,3 @@ public record TestEntity : IMongoEntity
     public bool is_active { get; set; }
     public DateTime created_date { get; set; }
 }
-
-//public interface ITestEntityDal : IEntityRepositoryMongo<TestEntity> { }
-//public class TestEntityDal : EntityRepositoryMongo<TestEntity>, ITestEntityDal
-//{
-//    public TestEntityDal() : base("test_database") { }
-//}

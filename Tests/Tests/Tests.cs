@@ -1,4 +1,5 @@
 ﻿using NUnit.Framework;
+using UEntity.MongoDb;
 
 namespace Tests.Tests;
 
