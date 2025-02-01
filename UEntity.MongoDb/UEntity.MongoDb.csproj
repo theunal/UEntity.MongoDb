@@ -12,7 +12,7 @@
 		<PackageIcon>logo.png</PackageIcon>
 		<PackageTags>mongodb generic repository</PackageTags>
 		<RepositoryType>git</RepositoryType>
-		<Version>3.1.0.6</Version>
+		<Version>3.1.0.7</Version>
 		<PackageReadmeFile>readme.md</PackageReadmeFile>
 	</PropertyGroup>
 

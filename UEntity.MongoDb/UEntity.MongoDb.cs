@@ -33,7 +33,7 @@ public interface IEntityRepositoryMongo<T> where T : IMongoEntity
     /// <param name="filter">Filter expression for the query.</param>
     /// <param name="sort">Optional sort criteria.</param>
     /// <returns>A list of matching documents.</returns>
-    List<T> GetAll(Expression<Func<T, bool>> filter, EntitySortModel<T>? sort = null);
+    List<T> GetAll(Expression<Func<T, bool>>? filter = null, EntitySortModel<T>? sort = null);
 
     /// <summary>
     /// Asynchronously retrieves all documents that match the specified filter with optional sorting.
@@ -41,7 +41,7 @@ public interface IEntityRepositoryMongo<T> where T : IMongoEntity
     /// <param name="filter">Filter expression for the query.</param>
     /// <param name="sort">Optional sort criteria.</param>
     /// <returns>A task representing the asynchronous operation. The result contains a list of matching documents.</returns>
-    Task<List<T>> GetAllAsync(Expression<Func<T, bool>> filter, EntitySortModel<T>? sort = null);
+    Task<List<T>> GetAllAsync(Expression<Func<T, bool>>? filter = null, EntitySortModel<T>? sort = null);
 
     /// <summary>
     /// Retrieves paginated results based on the specified page, size, and optional filters and sorting.
@@ -51,7 +51,7 @@ public interface IEntityRepositoryMongo<T> where T : IMongoEntity
     /// <param name="filter">Optional filter for the query.</param>
     /// <param name="sort">Optional sort criteria.</param>
     /// <returns>Paginated results.</returns>
-    Paginate<T> GetListPaginate(int page, int size, FilterDefinition<T>? filter = null, EntitySortModel<T>? sort = null);
+    Paginate<T> GetListPaginate(int page, int size, FilterDefinition<T> filter, EntitySortModel<T>? sort = null);
 
     /// <summary>
     /// Asynchronously retrieves paginated results based on the specified page, size, and optional filters and sorting.
@@ -62,7 +62,7 @@ public interface IEntityRepositoryMongo<T> where T : IMongoEntity
     /// <param name="sort">Optional sort criteria.</param>
     /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
     /// <returns>A task representing the asynchronous operation. The result contains paginated results.</returns>
-    Task<Paginate<T>> GetListPaginateAsync(int page, int size, FilterDefinition<T>? filter = null, EntitySortModel<T>? sort = null, CancellationToken cancellationToken = default);
+    Task<Paginate<T>> GetListPaginateAsync(int page, int size, FilterDefinition<T> filter, EntitySortModel<T>? sort = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Asynchronously inserts a single document into the collection.
@@ -210,26 +210,25 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
         }
         return await _collection.Find(filter).Limit(1).FirstOrDefaultAsync();
     }
-    public List<T> GetAll(Expression<Func<T, bool>> filter, EntitySortModel<T>? sort = null)
+    public List<T> GetAll(Expression<Func<T, bool>>? filter = null, EntitySortModel<T>? sort = null)
     {
         if (sort != null)
         {
-            return _collection.Find(filter).Sort(GetSortDefinitionBuilder(sort)).ToList();
+            return _collection.Find(filter ?? (_ => true)).Sort(GetSortDefinitionBuilder(sort)).ToList();
         }
-        return _collection.Find(filter).ToList();
+        return _collection.Find(filter ?? (_ => true)).ToList();
     }
-    public async Task<List<T>> GetAllAsync(Expression<Func<T, bool>> filter, EntitySortModel<T>? sort = null)
+    public async Task<List<T>> GetAllAsync(Expression<Func<T, bool>>? filter = null, EntitySortModel<T>? sort = null)
     {
         if (sort != null)
         {
-            return await _collection.Find(filter).Sort(GetSortDefinitionBuilder(sort)).ToListAsync();
+            return await _collection.Find(filter ?? (_ => true)).Sort(GetSortDefinitionBuilder(sort)).ToListAsync();
         }
-        return await _collection.Find(filter).ToListAsync();
+        return await _collection.Find(filter ?? (_ => true)).ToListAsync();
     }
-    public Paginate<T> GetListPaginate(int page, int size, FilterDefinition<T>? filter = null, EntitySortModel<T>? sort = null)
+    public Paginate<T> GetListPaginate(int page, int size, FilterDefinition<T> filter, EntitySortModel<T>? sort = null)
     {
         var query = _collection.Find(filter);
-
         if (sort != null)
         {
             query = query.Sort(GetSortDefinitionBuilder(sort));
@@ -248,7 +247,7 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
             HasNext = page * size < count
         };
     }
-    public async Task<Paginate<T>> GetListPaginateAsync(int page, int size, FilterDefinition<T>? filter = null, EntitySortModel<T>? sort = null, CancellationToken cancellationToken = default)
+    public async Task<Paginate<T>> GetListPaginateAsync(int page, int size, FilterDefinition<T> filter, EntitySortModel<T>? sort = null, CancellationToken cancellationToken = default)
     {
         var query = _collection.Find(filter);
         if (sort != null)
