@@ -365,7 +365,7 @@ public static class PredicateBuilderMongo
 {
     public static Expression<Func<T, bool>> NewQuery<T>(bool @is) => x => @is;
     public static Expression<Func<T, bool>> NewQuery<T>(Expression<Func<T, bool>> predicate) => predicate;
-    public static Expression<Func<T, bool>> And<T>(this Expression<Func<T, bool>> first, Expression<Func<T, bool>> second)
+    public static Expression<Func<T, bool>> AndMongo<T>(this Expression<Func<T, bool>> first, Expression<Func<T, bool>> second)
     {
         if (first == null) return second;
         if (second == null) return first;
@@ -376,7 +376,7 @@ public static class PredicateBuilderMongo
             ReplaceParameter(second.Body, second.Parameters[0], parameter));
         return Expression.Lambda<Func<T, bool>>(body, parameter);
     }
-    public static Expression<Func<T, bool>> Or<T>(this Expression<Func<T, bool>> first, Expression<Func<T, bool>> second)
+    public static Expression<Func<T, bool>> OrMongo<T>(this Expression<Func<T, bool>> first, Expression<Func<T, bool>> second)
     {
         if (first == null) return second;
         if (second == null) return first;
