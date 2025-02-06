@@ -17,7 +17,7 @@ public interface IEntityRepositoryMongo<T> where T : IMongoEntity
     /// <param name="filter">Filter expression for the query.</param>
     /// <param name="sort">Optional sort criteria.</param>
     /// <returns>The first matching document or null if not found.</returns>
-    T? Get(Expression<Func<T, bool>> filter, EntitySortModel<T>? sort = null);
+    T? Get(Expression<Func<T, bool>> filter, EntitySortModelMongo<T>? sort = null);
 
     /// <summary>
     /// Asynchronously retrieves a single document that matches the specified filter with optional sorting.
@@ -25,7 +25,7 @@ public interface IEntityRepositoryMongo<T> where T : IMongoEntity
     /// <param name="filter">Filter expression for the query.</param>
     /// <param name="sort">Optional sort criteria.</param>
     /// <returns>A task representing the asynchronous operation. The result contains the first matching document or null if not found.</returns>
-    Task<T?> GetAsync(Expression<Func<T, bool>> filter, EntitySortModel<T>? sort = null);
+    Task<T?> GetAsync(Expression<Func<T, bool>> filter, EntitySortModelMongo<T>? sort = null);
 
     /// <summary>
     /// Retrieves all documents that match the specified filter with optional sorting.
@@ -33,7 +33,7 @@ public interface IEntityRepositoryMongo<T> where T : IMongoEntity
     /// <param name="filter">Filter expression for the query.</param>
     /// <param name="sort">Optional sort criteria.</param>
     /// <returns>A list of matching documents.</returns>
-    List<T> GetAll(Expression<Func<T, bool>>? filter = null, EntitySortModel<T>? sort = null);
+    List<T> GetAll(Expression<Func<T, bool>>? filter = null, EntitySortModelMongo<T>? sort = null);
 
     /// <summary>
     /// Asynchronously retrieves all documents that match the specified filter with optional sorting.
@@ -41,7 +41,7 @@ public interface IEntityRepositoryMongo<T> where T : IMongoEntity
     /// <param name="filter">Filter expression for the query.</param>
     /// <param name="sort">Optional sort criteria.</param>
     /// <returns>A task representing the asynchronous operation. The result contains a list of matching documents.</returns>
-    Task<List<T>> GetAllAsync(Expression<Func<T, bool>>? filter = null, EntitySortModel<T>? sort = null);
+    Task<List<T>> GetAllAsync(Expression<Func<T, bool>>? filter = null, EntitySortModelMongo<T>? sort = null);
 
     /// <summary>
     /// Retrieves paginated results based on the specified page, size, and optional filters and sorting.
@@ -51,7 +51,7 @@ public interface IEntityRepositoryMongo<T> where T : IMongoEntity
     /// <param name="filter">Optional filter for the query.</param>
     /// <param name="sort">Optional sort criteria.</param>
     /// <returns>Paginated results.</returns>
-    Paginate<T> GetListPaginate(int page, int size, FilterDefinition<T> filter, EntitySortModel<T>? sort = null);
+    PaginateMongo<T> GetListPaginate(int page, int size, FilterDefinition<T> filter, EntitySortModelMongo<T>? sort = null);
 
     /// <summary>
     /// Asynchronously retrieves paginated results based on the specified page, size, and optional filters and sorting.
@@ -62,7 +62,7 @@ public interface IEntityRepositoryMongo<T> where T : IMongoEntity
     /// <param name="sort">Optional sort criteria.</param>
     /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
     /// <returns>A task representing the asynchronous operation. The result contains paginated results.</returns>
-    Task<Paginate<T>> GetListPaginateAsync(int page, int size, FilterDefinition<T> filter, EntitySortModel<T>? sort = null, CancellationToken cancellationToken = default);
+    Task<PaginateMongo<T>> GetListPaginateAsync(int page, int size, FilterDefinition<T> filter, EntitySortModelMongo<T>? sort = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Asynchronously inserts a single document into the collection.
@@ -194,7 +194,7 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
         throw new ArgumentNullException("Please call the “AddUEntityMongoDb” method in your program record.");
 
     /* select */
-    public T? Get(Expression<Func<T, bool>> filter, EntitySortModel<T>? sort = null)
+    public T? Get(Expression<Func<T, bool>> filter, EntitySortModelMongo<T>? sort = null)
     {
         if (sort != null)
         {
@@ -202,7 +202,7 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
         }
         return _collection.Find(filter).Limit(1).FirstOrDefault();
     }
-    public async Task<T?> GetAsync(Expression<Func<T, bool>> filter, EntitySortModel<T>? sort = null)
+    public async Task<T?> GetAsync(Expression<Func<T, bool>> filter, EntitySortModelMongo<T>? sort = null)
     {
         if (sort != null)
         {
@@ -210,7 +210,7 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
         }
         return await _collection.Find(filter).Limit(1).FirstOrDefaultAsync();
     }
-    public List<T> GetAll(Expression<Func<T, bool>>? filter = null, EntitySortModel<T>? sort = null)
+    public List<T> GetAll(Expression<Func<T, bool>>? filter = null, EntitySortModelMongo<T>? sort = null)
     {
         if (sort != null)
         {
@@ -218,7 +218,7 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
         }
         return _collection.Find(filter ?? (_ => true)).ToList();
     }
-    public async Task<List<T>> GetAllAsync(Expression<Func<T, bool>>? filter = null, EntitySortModel<T>? sort = null)
+    public async Task<List<T>> GetAllAsync(Expression<Func<T, bool>>? filter = null, EntitySortModelMongo<T>? sort = null)
     {
         if (sort != null)
         {
@@ -226,7 +226,7 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
         }
         return await _collection.Find(filter ?? (_ => true)).ToListAsync();
     }
-    public Paginate<T> GetListPaginate(int page, int size, FilterDefinition<T> filter, EntitySortModel<T>? sort = null)
+    public PaginateMongo<T> GetListPaginate(int page, int size, FilterDefinition<T> filter, EntitySortModelMongo<T>? sort = null)
     {
         var query = _collection.Find(filter);
         if (sort != null)
@@ -235,7 +235,7 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
         }
         var count = (int)_collection.CountDocuments(filter);
         var items = query.Skip(page * size).Limit(size).ToList();
-        return new Paginate<T>
+        return new PaginateMongo<T>
         {
             Index = page,
             Size = size,
@@ -247,7 +247,7 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
             HasNext = page * size < count
         };
     }
-    public async Task<Paginate<T>> GetListPaginateAsync(int page, int size, FilterDefinition<T> filter, EntitySortModel<T>? sort = null, CancellationToken cancellationToken = default)
+    public async Task<PaginateMongo<T>> GetListPaginateAsync(int page, int size, FilterDefinition<T> filter, EntitySortModelMongo<T>? sort = null, CancellationToken cancellationToken = default)
     {
         var query = _collection.Find(filter);
         if (sort != null)
@@ -257,7 +257,7 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
         var countTask = _collection.CountDocumentsAsync(filter, cancellationToken: cancellationToken);
         var itemsTask = query.Skip(page * size).Limit(size).ToListAsync(cancellationToken);
         await Task.WhenAll(countTask, itemsTask);
-        return new Paginate<T>
+        return new PaginateMongo<T>
         {
             Index = page,
             Size = size,
@@ -352,7 +352,7 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
         return _collection.AsQueryable().Min(filter);
     }
 
-    private static SortDefinition<T> GetSortDefinitionBuilder(EntitySortModel<T> sort)
+    private static SortDefinition<T> GetSortDefinitionBuilder(EntitySortModelMongo<T> sort)
     {
         var sortDefinitionBuilder = new SortDefinitionBuilder<T>();
         return sort.IsDescending
@@ -460,12 +460,12 @@ public static class UEntityMongoDbExtension
     }
 }
 public interface IMongoEntity { }
-public record EntitySortModel<T>
+public record EntitySortModelMongo<T>
 {
-    public required Expression<Func<T, object>> Sort { get; set; } = null!;
+    public required Expression<Func<T, object?>> Sort { get; set; } = null!;
     public bool IsDescending { get; set; }
 }
-public record Paginate<T>
+public record PaginateMongo<T>
 {
     public int From { get; set; } = 0;
     public int Index { get; set; } = 0;
