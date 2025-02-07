@@ -141,6 +141,8 @@ public interface IEntityRepositoryMongo<T> where T : IMongoEntity
     /// <returns>A list of projected results.</returns>
     List<TResult> SelectAll<TResult>(Expression<Func<T, TResult>> select, Expression<Func<T, bool>>? filter = null);
     Task<List<TResult>> SelectAllAsync<TResult>(Expression<Func<T, TResult>> select, Expression<Func<T, bool>>? filter = null);
+    TResult Select<TResult>(Expression<Func<T, TResult>> select, Expression<Func<T, bool>>? filter = null);
+    Task<TResult> SelectAsync<TResult>(Expression<Func<T, TResult>> select, Expression<Func<T, bool>>? filter = null);
 
     /// <summary>
     /// Counts the number of documents matching the specified filter.
@@ -318,6 +320,15 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
     {
         await ExecuteDeleteAsync(filter, cancellationToken);
         await AddRangeAsync(entities, cancellationToken);
+    }
+
+    public TResult Select<TResult>(Expression<Func<T, TResult>> select, Expression<Func<T, bool>>? filter = null)
+    {
+        return _collection.Find(filter ?? (_ => true)).Project(select).FirstOrDefault();
+    }
+    public Task<TResult> SelectAsync<TResult>(Expression<Func<T, TResult>> select, Expression<Func<T, bool>>? filter = null)
+    {
+        return _collection.Find(filter ?? (_ => true)).Project(select).FirstOrDefaultAsync();
     }
     public List<TResult> SelectAll<TResult>(Expression<Func<T, TResult>> select, Expression<Func<T, bool>>? filter = null)
     {
