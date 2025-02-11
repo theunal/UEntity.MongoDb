@@ -100,6 +100,8 @@ public interface IEntityRepositoryMongo<T> where T : IMongoEntity
     /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
     /// <returns>A task representing the asynchronous operation. The result contains the replace operation result.</returns>
     Task<ReplaceOneResult> UpdateAsync(Expression<Func<T, bool>> filter, T entity, CancellationToken cancellationToken = default);
+    Task<UpdateResult> ExecuteUpdateAsync(Expression<Func<UpdateDefinitionBuilder<T>, UpdateDefinition<T>>> updateExpression,
+            Expression<Func<T, bool>>? filter = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes a single document that matches the specified filter.
@@ -298,6 +300,13 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
     public Task<ReplaceOneResult> UpdateAsync(Expression<Func<T, bool>> filter, T entity, CancellationToken cancellationToken = default)
     {
         return _collection.ReplaceOneAsync(Builders<T>.Filter.Where(filter), entity, cancellationToken: cancellationToken);
+    }
+    public Task<UpdateResult> ExecuteUpdateAsync(Expression<Func<UpdateDefinitionBuilder<T>, UpdateDefinition<T>>> updateExpression,
+        Expression<Func<T, bool>>? filter = null, CancellationToken cancellationToken = default)
+    {
+        var updateDefinition = updateExpression.Compile().Invoke(Builders<T>.Update);
+        var filterDefinition = filter != null ? Builders<T>.Filter.Where(filter) : Builders<T>.Filter.Empty;
+        return _collection.UpdateManyAsync(filterDefinition, updateDefinition, cancellationToken: cancellationToken);
     }
 
     /* delete */
