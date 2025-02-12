@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Diagnostics.CodeAnalysis;
@@ -218,17 +218,17 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
     {
         if (sort != null)
         {
-            return _collection.Find(filter ?? (_ => true)).Sort(GetSortDefinitionBuilder(sort)).ToList();
+            return _collection.Find(filter ?? FilterDefinition<T>.Empty).Sort(GetSortDefinitionBuilder(sort)).ToList();
         }
-        return _collection.Find(filter ?? (_ => true)).ToList();
+        return _collection.Find(filter ?? FilterDefinition<T>.Empty).ToList();
     }
     public async Task<List<T>> GetAllAsync(Expression<Func<T, bool>>? filter = null, EntitySortModelMongo<T>? sort = null)
     {
         if (sort != null)
         {
-            return await _collection.Find(filter ?? (_ => true)).Sort(GetSortDefinitionBuilder(sort)).ToListAsync();
+            return await _collection.Find(filter ?? FilterDefinition<T>.Empty).Sort(GetSortDefinitionBuilder(sort)).ToListAsync();
         }
-        return await _collection.Find(filter ?? (_ => true)).ToListAsync();
+        return await _collection.Find(filter ?? FilterDefinition<T>.Empty).ToListAsync();
     }
     public PaginateMongo<T> GetListPaginate(int page, int size, FilterDefinition<T>? filter = null, EntitySortModelMongo<T>? sort = null)
     {
@@ -335,27 +335,27 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
 
     public TResult Select<TResult>(Expression<Func<T, TResult>> select, Expression<Func<T, bool>>? filter = null)
     {
-        return _collection.Find(filter ?? (_ => true)).Project(select).FirstOrDefault();
+        return _collection.Find(filter ?? FilterDefinition<T>.Empty).Project(select).FirstOrDefault();
     }
     public Task<TResult> SelectAsync<TResult>(Expression<Func<T, TResult>> select, Expression<Func<T, bool>>? filter = null)
     {
-        return _collection.Find(filter ?? (_ => true)).Project(select).FirstOrDefaultAsync();
+        return _collection.Find(filter ?? FilterDefinition<T>.Empty).Project(select).FirstOrDefaultAsync();
     }
     public List<TResult> SelectAll<TResult>(Expression<Func<T, TResult>> select, Expression<Func<T, bool>>? filter = null)
     {
-        return _collection.Find(filter ?? (_ => true)).Project(select).ToList();
+        return _collection.Find(filter ?? FilterDefinition<T>.Empty).Project(select).ToList();
     }
     public Task<List<TResult>> SelectAllAsync<TResult>(Expression<Func<T, TResult>> select, Expression<Func<T, bool>>? filter = null)
     {
-        return _collection.Find(filter ?? (_ => true)).Project(select).ToListAsync();
+        return _collection.Find(filter ?? FilterDefinition<T>.Empty).Project(select).ToListAsync();
     }
     public int Count(Expression<Func<T, bool>>? filter = null)
     {
-        return (int)_collection.CountDocuments(filter ?? (_ => true));
+        return (int)_collection.CountDocuments(filter ?? FilterDefinition<T>.Empty);
     }
     public Task<long> CountAsync(Expression<Func<T, bool>>? filter = null, CancellationToken cancellationToken = default)
     {
-        return _collection.CountDocumentsAsync(filter ?? (_ => true), cancellationToken: cancellationToken);
+        return _collection.CountDocumentsAsync(filter ?? FilterDefinition<T>.Empty, cancellationToken: cancellationToken);
     }
     public bool Any(Expression<Func<T, bool>> filter)
     {
