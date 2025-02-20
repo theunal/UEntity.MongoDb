@@ -52,14 +52,14 @@ public class Tests
         items = await Setup.DATABASE.GetAllAsync(predicate);
         Assert.That(items, Has.Count.EqualTo(100240));
 
-        predicate = predicate.And(x => x.agent_id == agent_id);
+        predicate = predicate.AndMongo(x => x.agent_id == agent_id);
         items = Setup.DATABASE.GetAll(predicate);
         Assert.That(items, Has.Count.EqualTo(1006));
 
         items = await Setup.DATABASE.GetAllAsync(predicate);
         Assert.That(items, Has.Count.EqualTo(1006));
 
-        predicate = predicate.And(x => x.age == 21);
+        predicate = predicate.AndMongo(x => x.age == 21);
         items = Setup.DATABASE.GetAll(predicate);
         Assert.That(items, Has.Count.EqualTo(15));
 
@@ -67,7 +67,7 @@ public class Tests
         Assert.That(items, Has.Count.EqualTo(15));
 
         var search_text = "10";
-        predicate = predicate.And(x =>
+        predicate = predicate.AndMongo(x =>
            x.email != null && x.email.ToLower().Contains(search_text) ||
            x.name != null && x.name.ToLower().Contains(search_text));
         items = Setup.DATABASE.GetAll(predicate);
@@ -76,7 +76,7 @@ public class Tests
         items = await Setup.DATABASE.GetAllAsync(predicate);
         Assert.That(items, Has.Count.EqualTo(1));
 
-        var search_or_predicate = predicate.Or(x => x.email.ToLower().Contains("18") && x.is_active == false);
+        var search_or_predicate = predicate.OrMongo(x => x.email.ToLower().Contains("18") && x.is_active == false);
         items = Setup.DATABASE.GetAll(search_or_predicate);
         Assert.That(items, Has.Count.EqualTo(19851));
 

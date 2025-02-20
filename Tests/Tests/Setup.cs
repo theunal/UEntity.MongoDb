@@ -3,7 +3,6 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using NUnit.Framework;
 using UEntity.MongoDb;
-using System;
 
 namespace Tests.Tests;
 
