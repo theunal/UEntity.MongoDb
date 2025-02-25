@@ -191,6 +191,7 @@ public interface IEntityRepositoryMongo<T> where T : IMongoEntity
     /// <param name="filter">Field selector expression.</param>
     /// <returns>The minimum value or null if no documents are found.</returns>
     TResult? Min<TResult>(Expression<Func<T, TResult>> filter);
+    Task<IAsyncCursor<BsonDocument>> AggregateAsync(BsonDocument[] pipeline);
 }
 public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMongo<T> where T : IMongoEntity
 {
@@ -214,6 +215,12 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
         }
         return await _collection.Find(filter).Limit(1).FirstOrDefaultAsync();
     }
+
+    public Task<IAsyncCursor<BsonDocument>> AggregateAsync(BsonDocument[] pipeline)
+    {
+        return _collection.AggregateAsync<BsonDocument>(pipeline);
+    }
+
     public List<T> GetAll(Expression<Func<T, bool>>? filter = null, EntitySortModelMongo<T>? sort = null)
     {
         if (sort != null)
