@@ -239,32 +239,32 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
     }
     public PaginateMongo<T> GetListPaginate(int page, int size, FilterDefinition<T>? filter = null, EntitySortModelMongo<T>? sort = null)
     {
-        page = page < 0 ? 0 : page;
-        size = size < 0 ? 0 : size;
+        page = page < 1 ? 1 : page;
+        size = size <= 0 ? 5 : size;
         filter ??= FilterDefinition<T>.Empty;
         var query = _collection.Find(filter);
         if (sort != null)
         {
             query = query.Sort(GetSortDefinitionBuilder(sort));
         }
-        var count = (int)_collection.CountDocuments(filter);
-        var items = query.Skip(page * size).Limit(size).ToList();
-        var pages = (int)Math.Ceiling(count / (double)size);
+        var total_count = (int)_collection.CountDocuments(filter);
+        var items = query.Skip((page - 1) * size).Limit(size).ToList();
+        var pages_count = (int)Math.Ceiling(total_count / (double)size);
         return new PaginateMongo<T>
         {
             Page = page,
             Size = size,
-            Count = count,
             Items = items,
-            Pages = pages,
-            HasPrevious = page > 0,
-            HasNext = (page + 1) < pages
+            TotalCount = total_count,
+            PagesCount = pages_count,
+            HasPrevious = page > 1,
+            HasNext = page < pages_count
         };
     }
     public async Task<PaginateMongo<T>> GetListPaginateAsync(int page, int size, FilterDefinition<T>? filter = null, EntitySortModelMongo<T>? sort = null, CancellationToken cancellationToken = default)
     {
-        page = page < 0 ? 0 : page;
-        size = size < 0 ? 0 : size;
+        page = page < 1 ? 1 : page;
+        size = size <= 0 ? 5 : size;
         filter ??= FilterDefinition<T>.Empty;
         var query = _collection.Find(filter);
         if (sort != null)
@@ -272,19 +272,19 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
             query = query.Sort(GetSortDefinitionBuilder(sort));
         }
         var countTask = _collection.CountDocumentsAsync(filter, cancellationToken: cancellationToken);
-        var itemsTask = query.Skip(page * size).Limit(size).ToListAsync(cancellationToken);
+        var itemsTask = query.Skip((page - 1) * size).Limit(size).ToListAsync(cancellationToken);
         await Task.WhenAll(countTask, itemsTask);
-        var count = countTask.Result;
-        var pages = (int)Math.Ceiling(count / (double)size);
+        var total_count = countTask.Result;
+        var pages_count = (int)Math.Ceiling(total_count / (double)size);
         return new PaginateMongo<T>
         {
             Page = page,
             Size = size,
-            Count = count,
-            Items = itemsTask.Result,
-            Pages = pages,
-            HasPrevious = page > 0,
-            HasNext = (page + 1) < pages
+            TotalCount = total_count,
+            PagesCount = pages_count,
+            HasPrevious = page > 1,
+            HasNext = page < pages_count,
+            Items = itemsTask.Result
         };
     }
 
@@ -433,6 +433,20 @@ public static class PredicateBuilderMongo
             return node == _oldParam ? _newParam : base.VisitParameter(node);
         }
     }
+
+    public static PaginateMongo<TDestination> ConvertItems<TSource, TDestination>(this PaginateMongo<TSource> source, List<TDestination> items)
+    {
+        return new PaginateMongo<TDestination>
+        {
+            TotalCount = source.TotalCount,
+            HasNext = source.HasNext,
+            HasPrevious = source.HasPrevious,
+            Page = source.Page,
+            PagesCount = source.PagesCount,
+            Size = source.Size,
+            Items = items
+        };
+    }
 }
 
 /// <summary>
@@ -503,8 +517,8 @@ public record PaginateMongo<T>
 {
     public int Page { get; set; }
     public int Size { get; set; }
-    public long Count { get; set; }
-    public int Pages { get; set; }
+    public long TotalCount { get; set; }
+    public long PagesCount { get; set; }
     public bool HasPrevious { get; set; }
     public bool HasNext { get; set; }
     public List<T> Items { get; set; } = null!;
