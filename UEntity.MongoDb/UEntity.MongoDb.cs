@@ -237,9 +237,9 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
         }
         return await _collection.Find(filter ?? FilterDefinition<T>.Empty).ToListAsync();
     }
-    public PaginateMongo<T> GetListPaginate(int index, int size, FilterDefinition<T>? filter = null, EntitySortModelMongo<T>? sort = null)
+    public PaginateMongo<T> GetListPaginate(int page, int size, FilterDefinition<T>? filter = null, EntitySortModelMongo<T>? sort = null)
     {
-        index = index < 0 ? 0 : index;
+        page = page < 0 ? 0 : page;
         size = size < 0 ? 0 : size;
         filter ??= FilterDefinition<T>.Empty;
         var query = _collection.Find(filter);
@@ -248,22 +248,22 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
             query = query.Sort(GetSortDefinitionBuilder(sort));
         }
         var count = (int)_collection.CountDocuments(filter);
-        var items = query.Skip(index * size).Limit(size).ToList();
+        var items = query.Skip(page * size).Limit(size).ToList();
         var pages = (int)Math.Ceiling(count / (double)size);
         return new PaginateMongo<T>
         {
-            Index = index,
+            Page = page,
             Size = size,
             Count = count,
             Items = items,
             Pages = pages,
-            HasPrevious = index > 0,
-            HasNext = (index + 1) < pages
+            HasPrevious = page > 0,
+            HasNext = (page + 1) < pages
         };
     }
-    public async Task<PaginateMongo<T>> GetListPaginateAsync(int index, int size, FilterDefinition<T>? filter = null, EntitySortModelMongo<T>? sort = null, CancellationToken cancellationToken = default)
+    public async Task<PaginateMongo<T>> GetListPaginateAsync(int page, int size, FilterDefinition<T>? filter = null, EntitySortModelMongo<T>? sort = null, CancellationToken cancellationToken = default)
     {
-        index = index < 0 ? 0 : index;
+        page = page < 0 ? 0 : page;
         size = size < 0 ? 0 : size;
         filter ??= FilterDefinition<T>.Empty;
         var query = _collection.Find(filter);
@@ -272,19 +272,19 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
             query = query.Sort(GetSortDefinitionBuilder(sort));
         }
         var countTask = _collection.CountDocumentsAsync(filter, cancellationToken: cancellationToken);
-        var itemsTask = query.Skip(index * size).Limit(size).ToListAsync(cancellationToken);
+        var itemsTask = query.Skip(page * size).Limit(size).ToListAsync(cancellationToken);
         await Task.WhenAll(countTask, itemsTask);
         var count = countTask.Result;
         var pages = (int)Math.Ceiling(count / (double)size);
         return new PaginateMongo<T>
         {
-            Index = index,
+            Page = page,
             Size = size,
             Count = count,
             Items = itemsTask.Result,
             Pages = pages,
-            HasPrevious = index > 0,
-            HasNext = (index + 1) < pages
+            HasPrevious = page > 0,
+            HasNext = (page + 1) < pages
         };
     }
 
@@ -501,12 +501,11 @@ public record EntitySortModelMongo<T>
 }
 public record PaginateMongo<T>
 {
-    //public int From { get; set; } = 0;
-    public int Index { get; set; } = 0;
-    public int Size { get; set; } = 0;
-    public long Count { get; set; } = 0;
-    public int Pages { get; set; } = 0;
-    public List<T> Items { get; set; } = [];
-    public bool HasPrevious { get; set; } = false;
-    public bool HasNext { get; set; } = false;
+    public int Page { get; set; }
+    public int Size { get; set; }
+    public long Count { get; set; }
+    public int Pages { get; set; }
+    public bool HasPrevious { get; set; }
+    public bool HasNext { get; set; }
+    public List<T> Items { get; set; } = null!;
 }
