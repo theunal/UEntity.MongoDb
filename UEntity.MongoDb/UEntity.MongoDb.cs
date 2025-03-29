@@ -239,6 +239,8 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
     }
     public PaginateMongo<T> GetListPaginate(int index, int size, FilterDefinition<T>? filter = null, EntitySortModelMongo<T>? sort = null)
     {
+        index = index < 0 ? 0 : index;
+        size = size < 0 ? 0 : size;
         filter ??= FilterDefinition<T>.Empty;
         var query = _collection.Find(filter);
         if (sort != null)
@@ -261,6 +263,8 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
     }
     public async Task<PaginateMongo<T>> GetListPaginateAsync(int index, int size, FilterDefinition<T>? filter = null, EntitySortModelMongo<T>? sort = null, CancellationToken cancellationToken = default)
     {
+        index = index < 0 ? 0 : index;
+        size = size < 0 ? 0 : size;
         filter ??= FilterDefinition<T>.Empty;
         var query = _collection.Find(filter);
         if (sort != null)
