@@ -491,6 +491,10 @@ public static class UEntityMongoDbExtension
                     Console.WriteLine($"{DateTime.Now.ToString("u")} Re-establishing the MongoDB connection...");
                     UEntityMongoClient = new MongoClient(UEntityMongoClient!.Settings);
 
+                    using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                    await UEntityMongoClient!.GetDatabase("admin").RunCommandAsync<BsonDocument>(new BsonDocument { { "ping", 1 } },
+                        cancellationToken: cancellationTokenSource.Token);
+
                     Console.ForegroundColor = ConsoleColor.Green;
                     Console.WriteLine($"{DateTime.Now.ToString("u")} The MongoDB connection was successfully re-established.");
                 }
