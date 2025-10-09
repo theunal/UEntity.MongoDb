@@ -326,21 +326,27 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
     /* delete */
     public DeleteResult ExecuteDelete(Expression<Func<T, bool>> filter)
     {
-        return _collection.DeleteMany(Builders<T>.Filter.Where(filter));
+        return _collection.DeleteMany(filter);
+        //return _collection.DeleteMany(Builders<T>.Filter.Where(filter));
     }
     public Task<DeleteResult> ExecuteDeleteAsync(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default)
     {
-        return _collection.DeleteManyAsync(Builders<T>.Filter.Where(filter), cancellationToken);
+        return _collection.DeleteManyAsync(filter, cancellationToken);
+        //return _collection.DeleteManyAsync(Builders<T>.Filter.Where(filter), cancellationToken);
     }
 
     /* other */
     public async Task RefreshAsync(Expression<Func<T, bool>> filter, T entity, CancellationToken cancellationToken = default)
     {
+        if (entity == null) return;
+
         await ExecuteDeleteAsync(filter, cancellationToken);
         await AddAsync(entity, cancellationToken);
     }
     public async Task RefreshAllAsync(Expression<Func<T, bool>> filter, IEnumerable<T> entities, CancellationToken cancellationToken = default)
     {
+        if (entities == null || !entities.Any()) return;
+
         await ExecuteDeleteAsync(filter, cancellationToken);
         await AddRangeAsync(entities, cancellationToken);
     }
@@ -514,7 +520,7 @@ public static class UEntityMongoDbExtension
 public interface IMongoEntity { }
 public record EntitySortModelMongo<T>
 {
-    public required Expression<Func<T, object?>> Sort { get; set; } = null!;
+    public Expression<Func<T, object?>> Sort { get; set; } = null!;
     public bool IsDescending { get; set; }
 }
 public record PaginateMongo<T>
