@@ -326,13 +326,11 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
     /* delete */
     public DeleteResult ExecuteDelete(Expression<Func<T, bool>> filter)
     {
-        return _collection.DeleteMany(filter);
-        //return _collection.DeleteMany(Builders<T>.Filter.Where(filter));
+        return _collection.DeleteMany(Builders<T>.Filter.Where(filter));
     }
     public Task<DeleteResult> ExecuteDeleteAsync(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default)
     {
-        return _collection.DeleteManyAsync(filter, cancellationToken);
-        //return _collection.DeleteManyAsync(Builders<T>.Filter.Where(filter), cancellationToken);
+        return _collection.DeleteManyAsync(Builders<T>.Filter.Where(filter), cancellationToken);
     }
 
     /* other */
