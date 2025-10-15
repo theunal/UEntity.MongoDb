@@ -11,6 +11,8 @@ namespace UEntity.MongoDb;
 /// </summary>
 public interface IEntityRepositoryMongo<T> where T : IMongoEntity
 {
+    IMongoCollection<T> Collection();
+
     /// <summary>
     /// Retrieves a single document that matches the specified filter with optional sorting.
     /// </summary>
@@ -197,6 +199,8 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
 {
     private readonly IMongoCollection<T> _collection = UEntityMongoDbExtension.UEntityMongoClient?.GetDatabase(databaseName)?.GetCollection<T>(typeof(T).Name) ??
         throw new ArgumentNullException("Please call the “AddUEntityMongoDb” method in your program record.");
+
+    public IMongoCollection<T> Collection() => _collection;
 
     /* select */
     public T? Get(Expression<Func<T, bool>> filter, EntitySortModelMongo<T>? sort = null)
