@@ -66,6 +66,11 @@ public interface IEntityRepositoryMongo<T> where T : IMongoEntity
     /// <returns>A task representing the asynchronous operation. The result contains paginated results.</returns>
     Task<PaginateMongo<T>> GetListPaginateAsync(int page, int size, FilterDefinition<T>? filter = null, EntitySortModelMongo<T>? sort = null, CancellationToken cancellationToken = default);
 
+    Task<PaginateMongo<TResult>> GetAggregatePaginateAsync<TResult>(
+            int page, int size,
+            IList<BsonDocument> basePipeline,
+            CancellationToken cancellationToken = default);
+
     /// <summary>
     /// Asynchronously inserts a single document into the collection.
     /// </summary>
@@ -265,7 +270,11 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
             HasNext = page < pages_count
         };
     }
-    public async Task<PaginateMongo<T>> GetListPaginateAsync(int page, int size, FilterDefinition<T>? filter = null, EntitySortModelMongo<T>? sort = null, CancellationToken cancellationToken = default)
+    public async Task<PaginateMongo<T>> GetListPaginateAsync(
+        int page, int size,
+        FilterDefinition<T>? filter = null,
+        EntitySortModelMongo<T>? sort = null,
+        CancellationToken cancellationToken = default)
     {
         page = page < 1 ? 1 : page;
         size = size <= 0 ? 5 : size;
@@ -291,6 +300,102 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
             Items = itemsTask.Result
         };
     }
+    public async Task<PaginateMongo<TResult>> GetAggregatePaginateAsync<TResult>(
+        int page, int size,
+        IList<BsonDocument> basePipeline,
+        CancellationToken cancellationToken = default)
+    {
+        page = page < 1 ? 1 : page;
+        size = size <= 0 ? 10 : size;
+        int skip = (page - 1) * size;
+
+        var countTask = _collection
+            .Aggregate<BsonDocument>(new List<BsonDocument>(basePipeline)
+        {
+            new("$count", "TotalCount")
+        }, cancellationToken: cancellationToken).FirstOrDefaultAsync(cancellationToken);
+
+        // Base pipeline’ın sonuna skip/limit aşamaları ekleniyor
+        var itemsTask = _collection
+            .Aggregate<TResult>(new List<BsonDocument>(basePipeline)
+        {
+            new("$skip", skip),
+            new("$limit", size)
+        }, cancellationToken: cancellationToken).ToListAsync(cancellationToken);
+
+        await Task.WhenAll(countTask, itemsTask);
+
+        int total_count = countTask.Result?["TotalCount"].AsInt32 ?? 0;
+        int pages_count = (int)Math.Ceiling(total_count / (double)size);
+        return new PaginateMongo<TResult>
+        {
+            Page = page,
+            Size = size,
+            TotalCount = total_count,
+            PagesCount = pages_count,
+            HasPrevious = page > 1,
+            HasNext = page < pages_count,
+            Items = itemsTask.Result
+        };
+    }
+    //public async Task<PaginateMongo<TResult>> GetAggregatePaginateAsync3<TResult>(
+    //int page, int size,
+    //IList<BsonDocument> basePipeline,
+    //EntitySortModelMongo<T>? sort = null,
+    //CancellationToken cancellationToken = default)
+    //{
+    //    page = page < 1 ? 1 : page;
+    //    size = size <= 0 ? 10 : size;
+    //    int skip = (page - 1) * size;
+
+    //    var pipeline = new List<BsonDocument>(basePipeline);
+
+    //    if (sort?.Sort != null)
+    //    {
+    //        var fieldName = GetFieldNameExpression(sort.Sort);
+    //        if (fieldName != null)
+    //        {
+    //            var direction = sort.IsDescending ? -1 : 1;
+    //            // Insert(0, ...) yerine Add() kullanın - pipeline sonuna ekler
+    //            pipeline.Add(new BsonDocument("$sort", new BsonDocument(fieldName, direction)));
+    //        }
+    //    }
+
+    //    pipeline.Add(new BsonDocument("$skip", skip));
+    //    pipeline.Add(new BsonDocument("$limit", size));
+
+    //    var items = await _collection
+    //        .Aggregate<TResult>(pipeline, cancellationToken: cancellationToken)
+    //        .ToListAsync(cancellationToken);
+
+    //    var countPipeline = new List<BsonDocument>(basePipeline)
+    //    {
+    //        new("$count", "TotalCount")
+    //    };
+    //    var countResult = await _collection
+    //        .Aggregate<BsonDocument>(countPipeline, cancellationToken: cancellationToken)
+    //        .FirstOrDefaultAsync(cancellationToken);
+    //    var totalCount = countResult?["TotalCount"].AsInt32 ?? 0;
+
+    //    var pagesCount = (int)Math.Ceiling(totalCount / (double)size);
+    //    return new PaginateMongo<TResult>
+    //    {
+    //        Page = page,
+    //        Size = size,
+    //        TotalCount = totalCount,
+    //        PagesCount = pagesCount,
+    //        HasPrevious = page > 1,
+    //        HasNext = page < pagesCount,
+    //        Items = items
+    //    };
+    //}
+    //private static string? GetFieldNameExpression<K>(Expression<Func<K, object?>> expression)
+    //{
+    //    if (expression.Body is MemberExpression member) return member.Member.Name;
+    //    if (expression.Body is UnaryExpression unary && unary.Operand is MemberExpression memberExpr)
+    //        return memberExpr.Member.Name;
+    //    return null;
+    //}
 
     /* add */
     public void Add(T entity)
