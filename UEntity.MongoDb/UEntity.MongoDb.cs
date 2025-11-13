@@ -1,8 +1,10 @@
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using Polly;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
+using System.Text.Json;
 
 namespace UEntity.MongoDb;
 
@@ -278,6 +280,7 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
     {
         page = page < 1 ? 1 : page;
         size = size <= 0 ? 5 : size;
+
         filter ??= FilterDefinition<T>.Empty;
         var query = _collection.Find(filter);
         if (sort != null)
@@ -293,11 +296,11 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
         {
             Page = page,
             Size = size,
+            Items = itemsTask.Result,
             TotalCount = total_count,
             PagesCount = pages_count,
             HasPrevious = page > 1,
-            HasNext = page < pages_count,
-            Items = itemsTask.Result
+            HasNext = page < pages_count
         };
     }
     public async Task<PaginateMongo<TResult>> GetAggregatePaginateAsync<TResult>(
@@ -306,7 +309,7 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
         CancellationToken cancellationToken = default)
     {
         page = page < 1 ? 1 : page;
-        size = size <= 0 ? 10 : size;
+        size = size <= 0 ? 5 : size;
         int skip = (page - 1) * size;
 
         var countTask = _collection
@@ -331,71 +334,13 @@ public class EntityRepositoryMongo<T>(string databaseName) : IEntityRepositoryMo
         {
             Page = page,
             Size = size,
+            Items = itemsTask.Result,
             TotalCount = total_count,
             PagesCount = pages_count,
             HasPrevious = page > 1,
-            HasNext = page < pages_count,
-            Items = itemsTask.Result
+            HasNext = page < pages_count
         };
     }
-    //public async Task<PaginateMongo<TResult>> GetAggregatePaginateAsync3<TResult>(
-    //int page, int size,
-    //IList<BsonDocument> basePipeline,
-    //EntitySortModelMongo<T>? sort = null,
-    //CancellationToken cancellationToken = default)
-    //{
-    //    page = page < 1 ? 1 : page;
-    //    size = size <= 0 ? 10 : size;
-    //    int skip = (page - 1) * size;
-
-    //    var pipeline = new List<BsonDocument>(basePipeline);
-
-    //    if (sort?.Sort != null)
-    //    {
-    //        var fieldName = GetFieldNameExpression(sort.Sort);
-    //        if (fieldName != null)
-    //        {
-    //            var direction = sort.IsDescending ? -1 : 1;
-    //            // Insert(0, ...) yerine Add() kullanın - pipeline sonuna ekler
-    //            pipeline.Add(new BsonDocument("$sort", new BsonDocument(fieldName, direction)));
-    //        }
-    //    }
-
-    //    pipeline.Add(new BsonDocument("$skip", skip));
-    //    pipeline.Add(new BsonDocument("$limit", size));
-
-    //    var items = await _collection
-    //        .Aggregate<TResult>(pipeline, cancellationToken: cancellationToken)
-    //        .ToListAsync(cancellationToken);
-
-    //    var countPipeline = new List<BsonDocument>(basePipeline)
-    //    {
-    //        new("$count", "TotalCount")
-    //    };
-    //    var countResult = await _collection
-    //        .Aggregate<BsonDocument>(countPipeline, cancellationToken: cancellationToken)
-    //        .FirstOrDefaultAsync(cancellationToken);
-    //    var totalCount = countResult?["TotalCount"].AsInt32 ?? 0;
-
-    //    var pagesCount = (int)Math.Ceiling(totalCount / (double)size);
-    //    return new PaginateMongo<TResult>
-    //    {
-    //        Page = page,
-    //        Size = size,
-    //        TotalCount = totalCount,
-    //        PagesCount = pagesCount,
-    //        HasPrevious = page > 1,
-    //        HasNext = page < pagesCount,
-    //        Items = items
-    //    };
-    //}
-    //private static string? GetFieldNameExpression<K>(Expression<Func<K, object?>> expression)
-    //{
-    //    if (expression.Body is MemberExpression member) return member.Member.Name;
-    //    if (expression.Body is UnaryExpression unary && unary.Operand is MemberExpression memberExpr)
-    //        return memberExpr.Member.Name;
-    //    return null;
-    //}
 
     /* add */
     public void Add(T entity)
