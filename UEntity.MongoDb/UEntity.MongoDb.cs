@@ -1,10 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using Polly;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
-using System.Text.Json;
 
 namespace UEntity.MongoDb;
 
