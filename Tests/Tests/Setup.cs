@@ -15,7 +15,7 @@ public class TestSetup
     public void OneTimeSetup()
     {
         UEntityMongoDbExtension.UEntityMongoClient = new MongoClient("mongodb://localhost:27017");
-        Setup.DATABASE = new EntityRepositoryMongo<TestEntity>("test_db");
+        Setup.DATABASE = new EntityRepositoryMongo<TestEntity, IMongoEntity>("test_db");
 
         //var all_agents = Enumerable.Range(0, 100).Select(x => Guid.NewGuid().ToString()).ToList();
         //var all_companies = Enumerable.Range(0, 10).Select(x => Guid.NewGuid().ToString()).ToList();
@@ -72,7 +72,12 @@ public class TestSetup
 
 public static class Setup
 {
-    public static EntityRepositoryMongo<TestEntity> DATABASE { get; set; } = null!;
+    public static EntityRepositoryMongo<TestEntity, IMongoEntity> DATABASE { get; set; } = null!;
+}
+
+public interface IMongoEntity
+{
+
 }
 
 public record TestEntity : IMongoEntity
