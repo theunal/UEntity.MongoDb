@@ -6,6 +6,9 @@ public record EntitySortModelMongo<T>
 {
     public Expression<Func<T, object?>> Sort { get; set; } = null!;
     public bool IsDescending { get; set; }
+
+    // Ek sıralamalar için
+    public List<(Expression<Func<T, object>> Field, bool IsDescending)>? AdditionalSorts { get; set; }
 }
 
 public record PaginateMongo<T>

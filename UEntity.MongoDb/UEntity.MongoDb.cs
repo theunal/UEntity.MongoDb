@@ -247,11 +247,49 @@ public class EntityRepositoryMongo<T, IBaseEntity>(string databaseName) : IEntit
         return _collection.AsQueryable().Min(filter);
     }
 
+    //private static SortDefinition<T> GetSortDefinitionBuilder(EntitySortModelMongo<T> sort)
+    //{
+    //    //var sortDefinitionBuilder = new SortDefinitionBuilder<T>();
+    //    //return sort.IsDescending
+    //    //    ? sortDefinitionBuilder.Descending(sort.Sort)
+    //    //    : sortDefinitionBuilder.Ascending(sort.Sort);
+
+    //    var sortDefinitionBuilder = new SortDefinitionBuilder<T>();
+
+    //    var sortDefinition = sort.IsDescending
+    //        ? sortDefinitionBuilder.Descending(sort.Sort)
+    //        : sortDefinitionBuilder.Ascending(sort.Sort);
+
+    //    // İkincil sıralama olarak _id ekle (stabil pagination için)
+    //    sortDefinition = sort.IsDescending
+    //        ? sortDefinition.Descending("_id")
+    //        : sortDefinition.Ascending("_id");
+
+    //    return sortDefinition;
+    //}
+
     private static SortDefinition<T> GetSortDefinitionBuilder(EntitySortModelMongo<T> sort)
     {
         var sortDefinitionBuilder = new SortDefinitionBuilder<T>();
-        return sort.IsDescending
+
+        // Birincil sıralama
+        var sortDefinition = sort.IsDescending
             ? sortDefinitionBuilder.Descending(sort.Sort)
             : sortDefinitionBuilder.Ascending(sort.Sort);
+
+        // İkincil, üçüncül vs. sıralamalar
+        foreach (var (Field, IsDescending) in sort.AdditionalSorts ?? [])
+        {
+            sortDefinition = IsDescending
+                ? sortDefinition.Descending(Field)
+                : sortDefinition.Ascending(Field);
+        }
+
+        // Son olarak _id ekle (stabil pagination için)
+        sortDefinition = sort.IsDescending
+            ? sortDefinition.Descending("_id")
+            : sortDefinition.Ascending("_id");
+
+        return sortDefinition;
     }
 }
