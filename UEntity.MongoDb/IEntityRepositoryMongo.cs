@@ -102,8 +102,10 @@ public interface IEntityRepositoryMongo<T, IBaseEntity> where T : class, IBaseEn
     /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
     /// <returns>A task representing the asynchronous operation. The result contains the replace operation result.</returns>
     Task<ReplaceOneResult> UpdateAsync(Expression<Func<T, bool>> filter, T entity, CancellationToken cancellationToken = default);
-    Task<UpdateResult> ExecuteUpdateAsync(Expression<Func<UpdateDefinitionBuilder<T>, UpdateDefinition<T>>> updateExpression,
-            Expression<Func<T, bool>>? filter = null, CancellationToken cancellationToken = default);
+    Task<UpdateResult> ExecuteUpdateAsync(
+        Expression<Func<UpdateDefinitionBuilder<T>, UpdateDefinition<T>>> updateExpression,
+        Expression<Func<T, bool>> filter, 
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes a single document that matches the specified filter.

@@ -172,11 +172,14 @@ public class EntityRepositoryMongo<T, IBaseEntity>(string databaseName) : IEntit
     {
         return _collection.ReplaceOneAsync(Builders<T>.Filter.Where(filter), entity, cancellationToken: cancellationToken);
     }
-    public Task<UpdateResult> ExecuteUpdateAsync(Expression<Func<UpdateDefinitionBuilder<T>, UpdateDefinition<T>>> updateExpression,
-        Expression<Func<T, bool>>? filter = null, CancellationToken cancellationToken = default)
+    public Task<UpdateResult> ExecuteUpdateAsync(
+        Expression<Func<UpdateDefinitionBuilder<T>, UpdateDefinition<T>>> updateExpression,
+        Expression<Func<T, bool>> filter, 
+        CancellationToken cancellationToken = default)
     {
         var updateDefinition = updateExpression.Compile().Invoke(Builders<T>.Update);
-        var filterDefinition = filter != null ? Builders<T>.Filter.Where(filter) : Builders<T>.Filter.Empty;
+        //var filterDefinition = filter != null ? Builders<T>.Filter.Where(filter) : Builders<T>.Filter.Empty;
+        var filterDefinition = Builders<T>.Filter.Where(filter);
         return _collection.UpdateManyAsync(filterDefinition, updateDefinition, cancellationToken: cancellationToken);
     }
 
